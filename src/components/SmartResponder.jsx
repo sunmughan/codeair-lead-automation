@@ -25,7 +25,7 @@ export default function SmartResponder({
   const lead = selectedLead || allLeads[0];
 
   const [clientReplyText, setClientReplyText] = useState(
-    "Hi Codeyar Team, we saw the custom website demo link you sent! We really liked the design. Can you share details about your development package and hosting cost?"
+    "Hi Codeair Team, we saw the custom website HTML file you sent! We really liked the design. Can you share details about your development package and hosting cost?"
   );
 
   const [isAiProcessing, setIsAiProcessing] = useState(false);
@@ -95,7 +95,7 @@ export default function SmartResponder({
             Simulate Client Lead Reply
           </h3>
           <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.8rem' }}>
-            Simulate incoming emails from client leads to test how AI responds on behalf of Codeyar.
+            Simulate incoming emails from client leads to test how AI responds on behalf of Codeair.
           </p>
 
           {/* Quick Preset Replies */}
@@ -164,7 +164,7 @@ export default function SmartResponder({
             Add Manual Inspection & Training Note
           </h3>
           <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.6rem' }}>
-            Add feedback notes to refine AI response tone and keep record for Codeyar team.
+            Add feedback notes to refine AI response tone and keep record for Codeair team.
           </p>
 
           <input 
@@ -271,7 +271,7 @@ export default function SmartResponder({
                   {isAi && (
                     <div style={{ fontSize: '0.72rem', color: '#a7f3d0', display: 'flex', alignItems: 'center', gap: '0.3rem', marginTop: '0.2rem' }}>
                       <CornerDownRight size={12} />
-                      Smart Response automatically recorded for Codeyar team review & model training.
+                      Smart Response automatically recorded for Codeair team review & model training.
                     </div>
                   )}
                 </div>

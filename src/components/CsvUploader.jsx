@@ -119,18 +119,19 @@ export default function CsvUploader({
                 ctaText: "Book Free Consultation"
               },
               pitchEmail: {
-                subject: `Customized Web Portal & Growth Engine for ${rawName}`,
+                subject: `Customized Web Portal Prototype for ${rawName}`,
                 body: `Dear ${rawName} Team,
 
-Greetings from Codeyar Software Solutions!
+Greetings from Codeair!
 
 We noticed ${rawName}'s impressive ${rawRating || 4.8}★ rating on Google Maps!
 
-Codeyar Software Solutions has crafted a specialized dynamic web portal prototype for ${rawName}:
-👉 Preview Link: [https://${rawName.toLowerCase().replace(/[^a-z0-9]/g, '-')}.preview.codeyar.com]
+Codeair has crafted a specialized dynamic web portal prototype for ${rawName}.
+
+Please find attached the HTML file of your custom web portal. You can download and open it directly in your browser.
 
 Best regards,
-Codeyar Software Solutions`
+Codeair`
               },
               activityNotes: [
                 {
