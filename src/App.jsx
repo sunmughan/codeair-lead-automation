@@ -7,6 +7,7 @@ import EmailPitcher from './components/EmailPitcher';
 import SmartResponder from './components/SmartResponder';
 import AdminSettingsModal from './components/AdminSettingsModal';
 import { INITIAL_LEADS } from './data/mockLeads';
+import { generateLeadHtml } from './utils/generateHtml';
 
 export default function App() {
   const [leads, setLeads] = useState(INITIAL_LEADS);
@@ -31,7 +32,7 @@ export default function App() {
     security: 'TLS',
     username: '',
     password: '',
-    senderName: 'Codeair Software Solutions'
+    senderName: 'Codeair'
   });
 
   const selectedLead = leads.find(l => l.id === selectedLeadId) || leads[0];
@@ -140,7 +141,9 @@ export default function App() {
         statusText: `[3/3] Dispatching REAL Email via SMTP Gateway (${smtpConfig.host}) to ${target.email}...`
       });
 
-      const pitchBody = `Dear ${target.businessName} Team,\n\nGreetings from Codeair Software Solutions!\n\nWe came across ${target.businessName} on Google Maps (${target.rating || 4.8}★ rating) and were thoroughly impressed!\n\nWe have created a custom high-performance web portal for ${target.businessName}:\n👉 Live Preview: [https://${previewUrl}]\n\nBest regards,\nCodeair Software Solutions`;
+      const pitchBody = `Dear ${target.businessName} Team,\n\nGreetings from Codeair!\n\nWe came across ${target.businessName} on Google Maps (${target.rating || 4.8}★ rating) and were thoroughly impressed!\n\nWe have created a custom high-performance web portal for ${target.businessName}.\n\nPlease find attached the HTML file of your custom web portal. You can download and open it directly in your browser.\n\nBest regards,\nCodeair`;
+
+      const htmlAttachment = generateLeadHtml(target, target.branding);
 
       try {
         await fetch('http://localhost:3001/api/send-email', {
@@ -150,7 +153,9 @@ export default function App() {
             smtpConfig,
             to: target.email,
             subject: target.pitchEmail?.subject || `Customized Web Portal for ${target.businessName}`,
-            body: pitchBody
+            body: pitchBody,
+            htmlAttachment,
+            businessName: target.businessName
           })
         });
       } catch (err) {
@@ -168,7 +173,7 @@ export default function App() {
               id: `note-campaign-${Date.now()}`,
               timestamp: timestamp,
               type: "pitch_sent",
-              content: `Automated Outreach Campaign executed!\n1. Gemini AI Web Search completed.\n2. Stitch MCP Project created.\n3. Real Pitch Email dispatched via SMTP Gateway (${smtpConfig.host}:${smtpConfig.port}) to ${l.email}.\nPreview Link: [https://${previewUrl}]`,
+              content: `Automated Outreach Campaign executed!\n1. Gemini AI Web Search completed.\n2. Stitch MCP Project created.\n3. Real Pitch Email dispatched via SMTP Gateway (${smtpConfig.host}:${smtpConfig.port}) to ${l.email}.\nAttached HTML Design File included.`,
               author: "Codeair Automated Outreach Pipeline"
             }
           ];
@@ -199,7 +204,7 @@ export default function App() {
             id: `note-${Date.now()}`,
             timestamp: timestamp,
             type: "pitch_sent",
-            content: `Personalized Pitch Email dispatched via SMTP (${smtpConfig.host}:${smtpConfig.port}) on behalf of ${smtpConfig.senderName || 'Codeair Software Solutions'}.\nSubject: "${subject}"\nAttached Web Page Preview Link: [https://${previewUrl}]`,
+            content: `Personalized Pitch Email dispatched via SMTP (${smtpConfig.host}:${smtpConfig.port}) on behalf of ${smtpConfig.senderName || 'Codeair'}.\nSubject: "${subject}"\nAttached Web Page HTML File included.`,
             author: `Codeair SMTP Engine (${smtpConfig.username || 'sales'})`
           }
         ];
@@ -244,7 +249,7 @@ export default function App() {
     
     // Formulate AI Smart Response on behalf of Codeair
     const targetLead = leads.find(l => l.id === leadId);
-    const aiResponseText = `Dear ${targetLead?.businessName || 'Team'},\n\nThank you for your response!\n\nAt Codeair Software Solutions, our specialized Web Development & Automation package for ${targetLead?.category || 'businesses'} includes:\n- Full responsive custom web portal\n- Free SSL & high-speed SSD hosting for 1 year\n- WhatsApp Chat & Lead Form integration\n\nOur launch package starts at ${packagePrice || '₹14,999'} complete. We can deploy your website live within 48 hours.\n\nWould tomorrow at 3:00 PM work for a brief 10-minute demo call?\n\nWarm regards,\nCodeair Software Solutions Team`;
+    const aiResponseText = `Dear ${targetLead?.businessName || 'Team'},\n\nThank you for your response!\n\nAt Codeair, our specialized Web Development & Automation package for ${targetLead?.category || 'businesses'} includes:\n- Full responsive custom web portal\n- Free SSL & high-speed SSD hosting for 1 year\n- WhatsApp Chat & Lead Form integration\n\nOur launch package starts at ${packagePrice || '₹14,999'} complete. We can deploy your website live within 48 hours.\n\nWould tomorrow at 3:00 PM work for a brief 10-minute demo call?\n\nWarm regards,\nCodeair Team`;
 
     setLeads(prev => prev.map(l => {
       if (l.id === leadId) {
@@ -423,7 +428,7 @@ export default function App() {
         color: 'var(--text-dim)',
         background: 'rgba(9, 13, 22, 0.9)'
       }}>
-        © 2026 <strong>Codeair Software Solutions</strong>. Lead Outreach & Dynamic Web Page Generation Platform. Built with React & Google Stitch MCP.
+        © 2026 <strong>Codeair</strong>. Lead Outreach & Dynamic Web Page Generation Platform. Built with React & Google Stitch MCP.
       </footer>
     </div>
   );

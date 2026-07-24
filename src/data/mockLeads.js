@@ -32,10 +32,11 @@ Hope you are doing great!
 
 We came across Apex Career Institute on Google while researching top-rated Coaching Institutes in Delhi. Your 4.8-star rating and student achievements are truly inspiring!
 
-At Codeair Software Solutions, we noticed that a high-converting, modern digital web portal can help you double your online demo class bookings and automate student admissions.
+At Codeair, we noticed that a high-converting, modern digital web portal can help you double your online demo class bookings and automate student admissions.
 
-We have designed a custom high-performance web landing page specifically tailored for Apex Career Institute:
-👉 Live Preview: [apex-career-institute.preview.codeair.com]
+We have designed a custom high-performance web landing page specifically tailored for Apex Career Institute.
+
+Please find attached the HTML file of your custom web portal. You can download and open it directly in your browser.
 
 Features included in your custom design:
 - Direct Free Demo Class Booking Form
@@ -46,7 +47,7 @@ Features included in your custom design:
 Would you be open to a quick 10-minute call this week to see how we can deploy this live for Apex Career Institute?
 
 Warm regards,
-Team Codeair Software Solutions
+Team Codeair
 Web & Automation Experts`
     },
     activityNotes: [
@@ -116,19 +117,20 @@ Web & Automation Experts`
       subject: "Interactive Student Portal Proposal for Zenith Scholars Academy",
       body: `Dear Zenith Scholars Academy Team,
 
-Greetings from Codeair Software Solutions!
+Greetings from Codeair!
 
 While searching for leading educational institutes in New Delhi, Zenith Scholars Academy caught our attention for your exceptional track record.
 
-To help Zenith Scholars Academy convert more website visitors into enrolled students, we created a specialized prototype landing page:
-👉 Custom Preview: [zenith-scholars.preview.codeair.com]
+To help Zenith Scholars Academy convert more website visitors into enrolled students, we created a specialized prototype landing page.
+
+Please find attached the HTML file of your custom web portal. You can download and open it directly in your browser.
 
 This interactive prototype features a Scholarship Test Registration Widget, Live Doubt Chat integration, and Parent Testimonial slider.
 
 Let us know if you'd like us to customize this further for Zenith Scholars Academy!
 
 Best regards,
-Codeair Software Solutions`
+Codeair`
     },
     activityNotes: [
       {

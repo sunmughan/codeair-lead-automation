@@ -14,6 +14,7 @@ import {
   Server,
   ShieldCheck
 } from 'lucide-react';
+import { generateLeadHtml } from '../utils/generateHtml';
 
 export default function EmailPitcher({ 
   selectedLead, 
@@ -30,7 +31,7 @@ export default function EmailPitcher({
   );
   
   const [emailBody, setEmailBody] = useState(
-    lead?.pitchEmail?.body || `Dear ${lead?.businessName || 'Team'},\n\nWe noticed your top ratings on Google!\n\nCodeair Software Solutions has designed a specialized web page for ${lead?.businessName}.\n\nPreview Link: [https://${(lead?.businessName || 'business').toLowerCase().replace(/[^a-z0-9]/g, '-')}.preview.codeair.com]\n\nBest regards,\nCodeair Software Solutions`
+    lead?.pitchEmail?.body || `Dear ${lead?.businessName || 'Team'},\n\nWe noticed your top ratings on Google!\n\nCodeair has designed a specialized web page for ${lead?.businessName}.\n\nPlease find attached the HTML file of your custom web portal. You can download and open it directly in your browser.\n\nBest regards,\nCodeair`
   );
 
   const [isSending, setIsSending] = useState(false);
@@ -51,7 +52,8 @@ export default function EmailPitcher({
     setSendError(null);
 
     try {
-      // Call real Node.js Express server with Nodemailer at http://localhost:3001/api/send-email
+      const htmlAttachment = generateLeadHtml(lead, lead.branding);
+
       const res = await fetch('http://localhost:3001/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -62,11 +64,13 @@ export default function EmailPitcher({
             security: 'TLS',
             username: 'sales@codeair.com',
             password: '••••••••••••••••',
-            senderName: 'Codeair Software Solutions'
+            senderName: 'Codeair'
           },
           to: lead.email,
           subject: emailSubject,
-          body: emailBody
+          body: emailBody,
+          htmlAttachment,
+          businessName: lead.businessName
         })
       });
 
@@ -108,7 +112,7 @@ export default function EmailPitcher({
               if (l) {
                 onSelectLead(l);
                 setEmailSubject(l.pitchEmail?.subject || `Customized Web Portal for ${l.businessName}`);
-                setEmailBody(l.pitchEmail?.body || `Dear ${l.businessName} Team,\n\nGreetings from Codeair Software Solutions...`);
+                setEmailBody(l.pitchEmail?.body || `Dear ${l.businessName} Team,\n\nGreetings from Codeair...`);
               }
             }}
             className="form-input"
@@ -134,7 +138,7 @@ export default function EmailPitcher({
           </div>
           <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
             Host: <strong style={{ color: '#fff' }}>{smtpConfig?.host || 'smtp.gmail.com'}:{smtpConfig?.port || '587'}</strong><br />
-            Sender Name: <strong style={{ color: '#c4b5fd' }}>{smtpConfig?.senderName || 'Codeair Software Solutions'}</strong>
+            Sender Name: <strong style={{ color: '#c4b5fd' }}>{smtpConfig?.senderName || 'Codeair'}</strong>
           </div>
         </div>
 
@@ -222,7 +226,7 @@ export default function EmailPitcher({
               Real Email Pitch Composer (SMTP Gateway)
             </h2>
             <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-              Dispatches actual emails on behalf of <strong>{smtpConfig?.senderName || 'Codeair Software Solutions'}</strong>.
+              Dispatches actual emails on behalf of <strong>{smtpConfig?.senderName || 'Codeair'}</strong>.
             </p>
           </div>
 
@@ -265,7 +269,7 @@ export default function EmailPitcher({
           </div>
 
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <label className="form-label">Email Body (Includes Dynamic Web Page Preview Link):</label>
+            <label className="form-label">Email Body (Custom HTML File will be attached automatically):</label>
             <textarea
               value={emailBody}
               onChange={(e) => setEmailBody(e.target.value)}
@@ -320,7 +324,7 @@ export default function EmailPitcher({
           {/* Action Bar */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
             <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-              Linked Landing Page: <span style={{ color: '#c4b5fd' }}>{(lead.businessName || '').toLowerCase().replace(/[^a-z0-9]/g, '-')}.preview.codeair.com</span>
+              Attachment: <span style={{ color: '#c4b5fd' }}>{(lead.businessName || '').toLowerCase().replace(/[^a-z0-9]/g, '-')}-design.html</span>
             </div>
 
             <button

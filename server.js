@@ -51,7 +51,7 @@ app.post('/api/test-smtp', async (req, res) => {
 
 // 2. Endpoint: Send Real Email via SMTP
 app.post('/api/send-email', async (req, res) => {
-  const { smtpConfig, to, subject, body } = req.body;
+  const { smtpConfig, to, subject, body, htmlAttachment, businessName } = req.body;
 
   if (!smtpConfig || !to || !subject || !body) {
     return res.status(400).json({ 
@@ -78,23 +78,31 @@ app.post('/api/send-email', async (req, res) => {
     });
 
     const mailOptions = {
-      from: `"${senderName || 'Codeair Software Solutions'}" <${username}>`,
+      from: `"${senderName || 'Codeair'}" <${username}>`,
       to: to,
       subject: subject,
       text: body,
       html: `
         <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1e293b; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
           <div style="background: #0f172a; color: #ffffff; padding: 15px 20px; border-radius: 6px 6px 0 0;">
-            <h2 style="margin: 0; font-size: 18px;">${senderName || 'Codeair Software Solutions'}</h2>
+            <h2 style="margin: 0; font-size: 18px;">${senderName || 'Codeair'}</h2>
           </div>
           <div style="padding: 20px 0; white-space: pre-line;">
             ${body}
           </div>
           <div style="border-top: 1px solid #e2e8f0; padding-top: 15px; font-size: 12px; color: #64748b; text-align: center;">
-            Sent on behalf of Codeair Software Solutions • Web & Automation Experts
+            Sent on behalf of Codeair • Web & Automation Experts
           </div>
         </div>
-      `
+      `,
+      ...(htmlAttachment ? {
+        attachments: [
+          {
+            filename: `${(businessName || 'web-portal').toLowerCase().replace(/[^a-z0-9]/g, '-')}-design.html`,
+            content: htmlAttachment
+          }
+        ]
+      } : {})
     };
 
     const info = await transporter.sendMail(mailOptions);
