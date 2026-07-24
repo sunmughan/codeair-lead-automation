@@ -35,10 +35,10 @@ export default function App() {
     senderName: 'Codeair Software Solutions'
   });
 
-  // Load Saved Persistent Credentials from Disk & LocalStorage on App Startup
+  // Load Saved Persistent Credentials from MySQL / Disk / LocalStorage on App Startup
   useEffect(() => {
     const loadPersistentConfig = async () => {
-      // 1. Try loading from backend disk (config.json)
+      // 1. Try loading from backend MySQL DB / Disk
       try {
         const res = await fetch('http://localhost:3001/api/get-config');
         const data = await res.json();
@@ -79,7 +79,7 @@ export default function App() {
     loadPersistentConfig();
   }, []);
 
-  // Save Credentials Persistently to both Backend Disk (config.json) AND LocalStorage
+  // Save Credentials Persistently to MySQL Database, Backend Disk, AND LocalStorage
   const handleSaveAllConfig = async (newConfig) => {
     const updatedGemini = newConfig.geminiApiKey !== undefined ? newConfig.geminiApiKey : geminiApiKey;
     const updatedStitch = newConfig.stitchToken !== undefined ? newConfig.stitchToken : stitchToken;
@@ -104,7 +104,7 @@ export default function App() {
       console.warn('LocalStorage save error:', e);
     }
 
-    // Save to Backend Disk (config.json)
+    // Save to Backend MySQL Database & Disk (config.json)
     try {
       await fetch('http://localhost:3001/api/save-config', {
         method: 'POST',
@@ -117,7 +117,7 @@ export default function App() {
           packagePrice: updatedPrice
         })
       });
-      console.log('✅ Credentials permanently saved to disk at config.json!');
+      console.log('✅ Credentials permanently saved to MySQL database admin_settings & config.json!');
     } catch (err) {
       console.warn('Backend save config notice:', err);
     }
@@ -234,7 +234,8 @@ export default function App() {
             subject: target.pitchEmail?.subject || `Customized Web Portal for ${target.businessName}`,
             body: pitchBody,
             htmlAttachment: generatedHtmlCode,
-            businessName: target.businessName
+            businessName: target.businessName,
+            leadId: target.id
           })
         });
         const data = await res.json();
@@ -475,15 +476,11 @@ export default function App() {
         isOpen={isAdminModalOpen}
         onClose={() => setIsAdminModalOpen(false)}
         geminiApiKey={geminiApiKey}
-        onSaveGeminiKey={(key) => handleSaveAllConfig({ geminiApiKey: key })}
         stitchToken={stitchToken}
-        onSaveStitchToken={(tok) => handleSaveAllConfig({ stitchToken: tok })}
         smtpConfig={smtpConfig}
-        onSaveSmtpConfig={(cfg) => handleSaveAllConfig({ smtpConfig: cfg })}
         previewDomain={previewDomain}
-        onSavePreviewDomain={(dom) => handleSaveAllConfig({ previewDomain: dom })}
         packagePrice={packagePrice}
-        onSavePackagePrice={(prc) => handleSaveAllConfig({ packagePrice: prc })}
+        onSaveAllConfig={handleSaveAllConfig}
       />
 
       <footer style={{
@@ -494,7 +491,7 @@ export default function App() {
         color: 'var(--text-dim)',
         background: 'rgba(9, 13, 22, 0.9)'
       }}>
-        © 2026 <strong>Codeair Software Solutions</strong>. Lead Outreach & Dynamic Web Page Generation Platform. Built with React & Google Stitch MCP.
+        © 2026 <strong>Codeair Software Solutions</strong>. Lead Outreach & Dynamic Web Page Generation Platform. Connected to MySQL Database.
       </footer>
     </div>
   );

@@ -12,22 +12,19 @@ import {
   Globe, 
   Send,
   RefreshCw,
-  DollarSign
+  DollarSign,
+  Database
 } from 'lucide-react';
 
 export default function AdminSettingsModal({ 
   isOpen, 
   onClose, 
   geminiApiKey, 
-  onSaveGeminiKey,
   stitchToken,
-  onSaveStitchToken,
   smtpConfig,
-  onSaveSmtpConfig,
   previewDomain,
-  onSavePreviewDomain,
   packagePrice,
-  onSavePackagePrice
+  onSaveAllConfig
 }) {
   const [geminiKeyInput, setGeminiKeyInput] = useState(geminiApiKey || '');
   const [stitchTokenInput, setStitchTokenInput] = useState(stitchToken || '');
@@ -80,7 +77,7 @@ export default function AdminSettingsModal({
       if (data.success) {
         setSmtpTestResult({
           success: true,
-          message: data.message || `SMTP Handshake Verified! Connected to ${smtp.host}:${smtp.port} cleanly. Real emails will be sent.`
+          message: data.message || `SMTP Handshake Verified! Authenticated with ${smtp.host}:${smtp.port} cleanly. Real emails will be sent.`
         });
       } else {
         setSmtpTestResult({
@@ -97,14 +94,21 @@ export default function AdminSettingsModal({
     }
   };
 
-  const handleSaveAll = () => {
-    onSaveGeminiKey(geminiKeyInput);
-    onSaveStitchToken(stitchTokenInput);
-    onSaveSmtpConfig(smtp);
-    if (onSavePreviewDomain) onSavePreviewDomain(domainInput);
-    if (onSavePackagePrice) onSavePackagePrice(priceInput);
+  // ONE SINGLE ATOMIC SAVE FUNCTION TO PREVENT OVERWRITING
+  const handleSaveAll = async () => {
+    const fullConfig = {
+      geminiApiKey: geminiKeyInput,
+      stitchToken: stitchTokenInput,
+      smtpConfig: smtp,
+      previewDomain: domainInput,
+      packagePrice: priceInput
+    };
 
-    setStatusMsg("All Credentials Saved Permanently to Local Disk & LocalStorage!");
+    if (onSaveAllConfig) {
+      await onSaveAllConfig(fullConfig);
+    }
+
+    setStatusMsg("All Credentials & Settings Saved Permanently to MySQL Database, Disk & LocalStorage!");
     setTimeout(() => {
       onClose();
     }, 900);
@@ -176,7 +180,7 @@ export default function AdminSettingsModal({
               Admin & Connection Settings
             </h2>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              Codeair Software Solutions • Persistent SMTP Email Gateway & AI Config
+              Codeair Software Solutions • MySQL Database Connected Settings
             </p>
           </div>
         </div>
@@ -251,10 +255,10 @@ export default function AdminSettingsModal({
               gap: '0.75rem',
               alignItems: 'flex-start'
             }}>
-              <Info size={20} color="#10b981" style={{ flexShrink: 0, marginTop: '2px' }} />
+              <Database size={20} color="#10b981" style={{ flexShrink: 0, marginTop: '2px' }} />
               <div>
-                <strong>📧 PERSISTENT SMTP CREDENTIALS:</strong><br />
-                Credentials enter karne ke baad <strong>"Save & Connect Credentials"</strong> button click karein. Yeh settings local disk (<code style={{ color: '#fff' }}>config.json</code>) me save ho jati hain taaki page refresh ya restart ke baad vanish na ho.
+                <strong>🗄️ MYSQL DATABASE PERSISTENT CREDENTIALS:</strong><br />
+                Enter your credentials below and click <strong>"Save & Connect Credentials"</strong>. All values will be stored permanently inside MySQL database <code style={{ color: '#fff' }}>codeair_automation.admin_settings</code>.
               </div>
             </div>
 
@@ -347,7 +351,7 @@ export default function AdminSettingsModal({
               </button>
 
               <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                SMTP Gateway: <strong style={{ color: '#10b981' }}>Node.js Express (Port 3001)</strong>
+                Database: <strong style={{ color: '#10b981' }}>MySQL (codeair_automation)</strong>
               </span>
             </div>
 
