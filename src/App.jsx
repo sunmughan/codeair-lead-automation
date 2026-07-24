@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import CsvUploader from './components/CsvUploader';
 import LeadTable from './components/LeadTable';
@@ -18,7 +18,7 @@ export default function App() {
   const [isCampaignRunning, setIsCampaignRunning] = useState(false);
   const [campaignProgress, setCampaignProgress] = useState(null);
 
-  // Admin Credentials & Connection State
+  // Admin Credentials & Persistent Connection State
   const [mcpConnected, setMcpConnected] = useState(true);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [geminiApiKey, setGeminiApiKey] = useState('');
@@ -32,12 +32,99 @@ export default function App() {
     security: 'TLS',
     username: '',
     password: '',
-    senderName: 'Codeair'
+    senderName: 'Codeair Software Solutions'
   });
+
+  // Load Saved Persistent Credentials from Disk & LocalStorage on App Startup
+  useEffect(() => {
+    const loadPersistentConfig = async () => {
+      // 1. Try loading from backend disk (config.json)
+      try {
+        const res = await fetch('http://localhost:3001/api/get-config');
+        const data = await res.json();
+        if (data.success && data.config) {
+          const cfg = data.config;
+          if (cfg.geminiApiKey) setGeminiApiKey(cfg.geminiApiKey);
+          if (cfg.stitchToken) setStitchToken(cfg.stitchToken);
+          if (cfg.previewDomain) setPreviewDomain(cfg.previewDomain);
+          if (cfg.packagePrice) setPackagePrice(cfg.packagePrice);
+          if (cfg.smtpConfig) setSmtpConfig(cfg.smtpConfig);
+          return;
+        }
+      } catch (err) {
+        console.warn('Backend config fetch notice:', err);
+      }
+
+      // 2. Fallback to LocalStorage
+      try {
+        const localSmtp = localStorage.getItem('codeair_smtp_config');
+        if (localSmtp) setSmtpConfig(JSON.parse(localSmtp));
+
+        const localGemini = localStorage.getItem('codeair_gemini_key');
+        if (localGemini) setGeminiApiKey(localGemini);
+
+        const localStitch = localStorage.getItem('codeair_stitch_token');
+        if (localStitch) setStitchToken(localStitch);
+
+        const localDomain = localStorage.getItem('codeair_preview_domain');
+        if (localDomain) setPreviewDomain(localDomain);
+
+        const localPrice = localStorage.getItem('codeair_package_price');
+        if (localPrice) setPackagePrice(localPrice);
+      } catch (err) {
+        console.warn('LocalStorage load error:', err);
+      }
+    };
+
+    loadPersistentConfig();
+  }, []);
+
+  // Save Credentials Persistently to both Backend Disk (config.json) AND LocalStorage
+  const handleSaveAllConfig = async (newConfig) => {
+    const updatedGemini = newConfig.geminiApiKey !== undefined ? newConfig.geminiApiKey : geminiApiKey;
+    const updatedStitch = newConfig.stitchToken !== undefined ? newConfig.stitchToken : stitchToken;
+    const updatedSmtp = newConfig.smtpConfig || smtpConfig;
+    const updatedDomain = newConfig.previewDomain || previewDomain;
+    const updatedPrice = newConfig.packagePrice || packagePrice;
+
+    setGeminiApiKey(updatedGemini);
+    setStitchToken(updatedStitch);
+    setSmtpConfig(updatedSmtp);
+    setPreviewDomain(updatedDomain);
+    setPackagePrice(updatedPrice);
+
+    // Save to LocalStorage
+    try {
+      localStorage.setItem('codeair_gemini_key', updatedGemini);
+      localStorage.setItem('codeair_stitch_token', updatedStitch);
+      localStorage.setItem('codeair_smtp_config', JSON.stringify(updatedSmtp));
+      localStorage.setItem('codeair_preview_domain', updatedDomain);
+      localStorage.setItem('codeair_package_price', updatedPrice);
+    } catch (e) {
+      console.warn('LocalStorage save error:', e);
+    }
+
+    // Save to Backend Disk (config.json)
+    try {
+      await fetch('http://localhost:3001/api/save-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          geminiApiKey: updatedGemini,
+          stitchToken: updatedStitch,
+          smtpConfig: updatedSmtp,
+          previewDomain: updatedDomain,
+          packagePrice: updatedPrice
+        })
+      });
+      console.log('✅ Credentials permanently saved to disk at config.json!');
+    } catch (err) {
+      console.warn('Backend save config notice:', err);
+    }
+  };
 
   const selectedLead = leads.find(l => l.id === selectedLeadId) || leads[0];
 
-  // Helper stats
   const leadsCount = leads.length;
   const designedCount = leads.filter(l => l.status === 'designed' || l.status === 'sent' || l.status === 'replied').length;
   const sentCount = leads.filter(l => l.status === 'sent' || l.status === 'replied').length;
@@ -48,7 +135,6 @@ export default function App() {
     return (previewDomain || '{slug}.preview.codeair.com').replace('{slug}', slug);
   };
 
-  // Import Leads from CSV
   const handleImportLeads = (newLeads) => {
     setLeads(newLeads);
     if (newLeads.length > 0) {
@@ -56,13 +142,11 @@ export default function App() {
     }
   };
 
-  // Load Sample Leads
   const handleLoadSampleLeads = () => {
     setLeads(INITIAL_LEADS);
     setSelectedLeadId(INITIAL_LEADS[0].id);
   };
 
-  // Update Dynamic Branding
   const handleUpdateLeadBranding = (leadId, newBranding) => {
     setLeads(prev => prev.map(l => {
       if (l.id === leadId) {
@@ -76,7 +160,6 @@ export default function App() {
     }));
   };
 
-  // Trigger Stitch MCP / Gemini Project Creation
   const handleGenerateStitchProject = (leadId, engine, branding) => {
     const timestamp = new Date().toLocaleString();
     setLeads(prev => prev.map(l => {
@@ -104,7 +187,6 @@ export default function App() {
     }));
   };
 
-  // Batch Campaign Automation Engine with REAL SMTP Dispatch
   const handleStartAutomatedCampaign = async () => {
     if (leads.length === 0) return;
     setIsCampaignRunning(true);
@@ -114,8 +196,8 @@ export default function App() {
     for (let i = 0; i < totalLeads; i++) {
       const target = leads[i];
       const previewUrl = getDynamicPreviewUrl(target.businessName);
+      const generatedHtmlCode = generateLeadHtml(target, target.branding);
 
-      // 1. Web Search
       setCampaignProgress({
         current: i + 1,
         total: totalLeads,
@@ -124,29 +206,26 @@ export default function App() {
       });
       await new Promise(r => setTimeout(r, 600));
 
-      // 2. Stitch MCP Project Creation
       setCampaignProgress({
         current: i + 1,
         total: totalLeads,
         percentage: Math.round(((i + 0.6) / totalLeads) * 100),
-        statusText: `[2/3] Auto-Creating Google Stitch MCP Project & Dynamic Web Page for "${target.businessName}"...`
+        statusText: `[2/3] Auto-Creating Stitch MCP Project & Saving Local HTML File for "${target.businessName}"...`
       });
       await new Promise(r => setTimeout(r, 700));
 
-      // 3. REAL SMTP Email Dispatch
       setCampaignProgress({
         current: i + 1,
         total: totalLeads,
         percentage: Math.round(((i + 1) / totalLeads) * 100),
-        statusText: `[3/3] Dispatching REAL Email via SMTP Gateway (${smtpConfig.host}) to ${target.email}...`
+        statusText: `[3/3] Dispatching REAL Email + Attached HTML File via SMTP (${smtpConfig.host}) to ${target.email}...`
       });
 
-      const pitchBody = `Dear ${target.businessName} Team,\n\nGreetings from Codeair!\n\nWe came across ${target.businessName} on Google Maps (${target.rating || 4.8}★ rating) and were thoroughly impressed!\n\nWe have created a custom high-performance web portal for ${target.businessName}.\n\nPlease find attached the HTML file of your custom web portal. You can download and open it directly in your browser.\n\nBest regards,\nCodeair`;
+      const pitchBody = `Dear ${target.businessName} Team,\n\nGreetings from Codeair Software Solutions!\n\nWe came across ${target.businessName} on Google Maps (${target.rating || 4.8}★ rating) and were thoroughly impressed!\n\nWe have created a custom high-performance web portal for ${target.businessName} and attached the complete interactive web page file directly to this email.\n\nBest regards,\nCodeair Software Solutions`;
 
-      const htmlAttachment = generateLeadHtml(target, target.branding);
-
+      let savedFileNotice = '';
       try {
-        await fetch('http://localhost:3001/api/send-email', {
+        const res = await fetch('http://localhost:3001/api/send-email', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -154,10 +233,14 @@ export default function App() {
             to: target.email,
             subject: target.pitchEmail?.subject || `Customized Web Portal for ${target.businessName}`,
             body: pitchBody,
-            htmlAttachment,
+            htmlAttachment: generatedHtmlCode,
             businessName: target.businessName
           })
         });
+        const data = await res.json();
+        if (data.savedLocalPath) {
+          savedFileNotice = `\nAttached HTML file saved locally at: '${data.savedLocalPath}'`;
+        }
       } catch (err) {
         console.warn('Real SMTP Server notification:', err);
       }
@@ -173,7 +256,7 @@ export default function App() {
               id: `note-campaign-${Date.now()}`,
               timestamp: timestamp,
               type: "pitch_sent",
-              content: `Automated Outreach Campaign executed!\n1. Gemini AI Web Search completed.\n2. Stitch MCP Project created.\n3. Real Pitch Email dispatched via SMTP Gateway (${smtpConfig.host}:${smtpConfig.port}) to ${l.email}.\nAttached HTML Design File included.`,
+              content: `Automated Outreach Campaign executed!\n1. Gemini AI Web Search completed.\n2. Stitch MCP Project created.\n3. Real Pitch Email + HTML File Attachment dispatched via SMTP Gateway (${smtpConfig.host}:${smtpConfig.port}) to ${l.email}.${savedFileNotice}`,
               author: "Codeair Automated Outreach Pipeline"
             }
           ];
@@ -192,19 +275,17 @@ export default function App() {
     setActiveTab('emails');
   };
 
-  // Send Pitch Email via SMTP
   const handleSendPitchEmail = (leadId, { subject, body }) => {
     const timestamp = new Date().toLocaleString();
     setLeads(prev => prev.map(l => {
       if (l.id === leadId) {
-        const previewUrl = getDynamicPreviewUrl(l.businessName);
         const newNotes = [
           ...(l.activityNotes || []),
           {
             id: `note-${Date.now()}`,
             timestamp: timestamp,
             type: "pitch_sent",
-            content: `Personalized Pitch Email dispatched via SMTP (${smtpConfig.host}:${smtpConfig.port}) on behalf of ${smtpConfig.senderName || 'Codeair'}.\nSubject: "${subject}"\nAttached Web Page HTML File included.`,
+            content: `Personalized Pitch Email dispatched via SMTP (${smtpConfig.host}:${smtpConfig.port}) on behalf of ${smtpConfig.senderName || 'Codeair Software Solutions'}.\nSubject: "${subject}"\nAttached Web Page File: ${(l.businessName || 'web-portal').toLowerCase().replace(/[^a-z0-9]/g, '-')}-landing-page.html`,
             author: `Codeair SMTP Engine (${smtpConfig.username || 'sales'})`
           }
         ];
@@ -219,7 +300,6 @@ export default function App() {
     }));
   };
 
-  // Trigger Follow-up
   const handleTriggerFollowUp = (leadId, stageLabel) => {
     const timestamp = new Date().toLocaleString();
     setLeads(prev => prev.map(l => {
@@ -230,7 +310,7 @@ export default function App() {
             id: `note-${Date.now()}`,
             timestamp: timestamp,
             type: "follow_up",
-            content: `Automated Follow-up triggered via SMTP (${stageLabel}). Email sent to ${l.email} reminding them to check their dynamic web portal demo.`,
+            content: `Automated Follow-up triggered via SMTP (${stageLabel}). Email sent to ${l.email} reminding them to check their attached web portal demo.`,
             author: "Automated Follow-Up Sequencer"
           }
         ];
@@ -243,13 +323,11 @@ export default function App() {
     }));
   };
 
-  // Simulate Client Reply & Generate AI Response
   const handleSimulateClientReply = (leadId, clientMsg) => {
     const timestamp = new Date().toLocaleString();
     
-    // Formulate AI Smart Response on behalf of Codeair
     const targetLead = leads.find(l => l.id === leadId);
-    const aiResponseText = `Dear ${targetLead?.businessName || 'Team'},\n\nThank you for your response!\n\nAt Codeair, our specialized Web Development & Automation package for ${targetLead?.category || 'businesses'} includes:\n- Full responsive custom web portal\n- Free SSL & high-speed SSD hosting for 1 year\n- WhatsApp Chat & Lead Form integration\n\nOur launch package starts at ${packagePrice || '₹14,999'} complete. We can deploy your website live within 48 hours.\n\nWould tomorrow at 3:00 PM work for a brief 10-minute demo call?\n\nWarm regards,\nCodeair Team`;
+    const aiResponseText = `Dear ${targetLead?.businessName || 'Team'},\n\nThank you for your response!\n\nAt Codeair Software Solutions, our specialized Web Development & Automation package for ${targetLead?.category || 'businesses'} includes:\n- Full responsive custom web portal\n- Free SSL & high-speed SSD hosting for 1 year\n- WhatsApp Chat & Lead Form integration\n\nOur launch package starts at ${packagePrice || '₹14,999'} complete. We can deploy your website live within 48 hours.\n\nWould tomorrow at 3:00 PM work for a brief 10-minute demo call?\n\nWarm regards,\nCodeair Software Solutions Team`;
 
     setLeads(prev => prev.map(l => {
       if (l.id === leadId) {
@@ -280,7 +358,6 @@ export default function App() {
     }));
   };
 
-  // Add Manual Note
   const handleAddManualNote = (leadId, noteText) => {
     const timestamp = new Date().toLocaleString();
     setLeads(prev => prev.map(l => {
@@ -307,7 +384,6 @@ export default function App() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       
-      {/* App Header */}
       <Header 
         activeTab={activeTab}
         setActiveTab={(tab) => {
@@ -325,10 +401,8 @@ export default function App() {
         onOpenMcpModal={() => setIsAdminModalOpen(true)}
       />
 
-      {/* Main App Content Area */}
       <main style={{ maxWidth: '1400px', margin: '0 auto', padding: '2rem 1.5rem', flex: 1, width: '100%' }}>
         
-        {/* Tab 1: CSV Leads Hub */}
         {activeTab === 'leads' && (
           <div className="animate-fade-in">
             <CsvUploader 
@@ -357,7 +431,6 @@ export default function App() {
           </div>
         )}
 
-        {/* Tab 2: Dynamic Web Studio */}
         {activeTab === 'studio' && (
           <div className="animate-fade-in">
             <WebPageStudio 
@@ -371,7 +444,6 @@ export default function App() {
           </div>
         )}
 
-        {/* Tab 3: Pitch & Forward Email */}
         {activeTab === 'emails' && (
           <div className="animate-fade-in">
             <EmailPitcher 
@@ -385,7 +457,6 @@ export default function App() {
           </div>
         )}
 
-        {/* Tab 4: Smart Reply & Activity Notes Log */}
         {activeTab === 'smart-replies' && (
           <div className="animate-fade-in">
             <SmartResponder 
@@ -400,26 +471,21 @@ export default function App() {
 
       </main>
 
-      {/* Beginner-Friendly Admin Settings Modal */}
       <AdminSettingsModal 
         isOpen={isAdminModalOpen}
         onClose={() => setIsAdminModalOpen(false)}
         geminiApiKey={geminiApiKey}
-        onSaveGeminiKey={(key) => setGeminiApiKey(key)}
+        onSaveGeminiKey={(key) => handleSaveAllConfig({ geminiApiKey: key })}
         stitchToken={stitchToken}
-        onSaveStitchToken={(tok) => {
-          setStitchToken(tok);
-          setMcpConnected(true);
-        }}
+        onSaveStitchToken={(tok) => handleSaveAllConfig({ stitchToken: tok })}
         smtpConfig={smtpConfig}
-        onSaveSmtpConfig={(cfg) => setSmtpConfig(cfg)}
+        onSaveSmtpConfig={(cfg) => handleSaveAllConfig({ smtpConfig: cfg })}
         previewDomain={previewDomain}
-        onSavePreviewDomain={(dom) => setPreviewDomain(dom)}
+        onSavePreviewDomain={(dom) => handleSaveAllConfig({ previewDomain: dom })}
         packagePrice={packagePrice}
-        onSavePackagePrice={(prc) => setPackagePrice(prc)}
+        onSavePackagePrice={(prc) => handleSaveAllConfig({ packagePrice: prc })}
       />
 
-      {/* Footer */}
       <footer style={{
         borderTop: '1px solid var(--border-color)',
         padding: '1.25rem 1.5rem',
@@ -428,7 +494,7 @@ export default function App() {
         color: 'var(--text-dim)',
         background: 'rgba(9, 13, 22, 0.9)'
       }}>
-        © 2026 <strong>Codeair</strong>. Lead Outreach & Dynamic Web Page Generation Platform. Built with React & Google Stitch MCP.
+        © 2026 <strong>Codeair Software Solutions</strong>. Lead Outreach & Dynamic Web Page Generation Platform. Built with React & Google Stitch MCP.
       </footer>
     </div>
   );

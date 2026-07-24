@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   X, 
   Sparkles, 
@@ -7,14 +7,11 @@ import {
   Server, 
   Check, 
   AlertCircle, 
-  HelpCircle, 
   Info, 
   ShieldCheck, 
   Globe, 
   Send,
-  Zap,
   RefreshCw,
-  Lock,
   DollarSign
 } from 'lucide-react';
 
@@ -46,6 +43,14 @@ export default function AdminSettingsModal({
     password: '',
     senderName: 'Codeair Software Solutions'
   });
+
+  useEffect(() => {
+    if (geminiApiKey !== undefined) setGeminiKeyInput(geminiApiKey);
+    if (stitchToken !== undefined) setStitchTokenInput(stitchToken);
+    if (previewDomain !== undefined) setDomainInput(previewDomain);
+    if (packagePrice !== undefined) setPriceInput(packagePrice);
+    if (smtpConfig !== undefined) setSmtp(smtpConfig);
+  }, [geminiApiKey, stitchToken, previewDomain, packagePrice, smtpConfig]);
 
   const [activeTab, setActiveTab] = useState('smtp');
   const [testingSmtp, setTestingSmtp] = useState(false);
@@ -99,7 +104,7 @@ export default function AdminSettingsModal({
     if (onSavePreviewDomain) onSavePreviewDomain(domainInput);
     if (onSavePackagePrice) onSavePackagePrice(priceInput);
 
-    setStatusMsg("All Configuration & SMTP Connection Settings Saved Successfully!");
+    setStatusMsg("All Credentials Saved Permanently to Local Disk & LocalStorage!");
     setTimeout(() => {
       onClose();
     }, 900);
@@ -171,7 +176,7 @@ export default function AdminSettingsModal({
               Admin & Connection Settings
             </h2>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              Codeair Software Solutions • SMTP Email Gateway, Domain & Pricing Config
+              Codeair Software Solutions • Persistent SMTP Email Gateway & AI Config
             </p>
           </div>
         </div>
@@ -248,8 +253,8 @@ export default function AdminSettingsModal({
             }}>
               <Info size={20} color="#10b981" style={{ flexShrink: 0, marginTop: '2px' }} />
               <div>
-                <strong>📧 REAL SMTP EMAIL DISPATCHING SETUP:</strong><br />
-                Real emails bhejne ke liye apni actual SMTP credentials daalein. Gmail users: Host me <code style={{ color: '#fff' }}>smtp.gmail.com</code>, Port <code style={{ color: '#fff' }}>587</code> aur Gmail ka <strong>"App Password"</strong> use karein.
+                <strong>📧 PERSISTENT SMTP CREDENTIALS:</strong><br />
+                Credentials enter karne ke baad <strong>"Save & Connect Credentials"</strong> button click karein. Yeh settings local disk (<code style={{ color: '#fff' }}>config.json</code>) me save ho jati hain taaki page refresh ya restart ke baad vanish na ho.
               </div>
             </div>
 
@@ -376,7 +381,7 @@ export default function AdminSettingsModal({
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                 <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#c4b5fd', margin: 0 }}>
                   <Key size={15} />
-                  Gemini API Key (For AI Web Search & Web Page Generation)
+                  Gemini API Key (For AI Web Search & Dynamic Generation)
                 </label>
                 
                 <a 
@@ -426,7 +431,7 @@ export default function AdminSettingsModal({
               
               <input 
                 type="text"
-                placeholder="{slug}.preview.codeair.com or http://localhost:5173/preview/{id}"
+                placeholder="{slug}.preview.codeair.com"
                 value={domainInput}
                 onChange={(e) => setDomainInput(e.target.value)}
                 className="form-input"
@@ -438,7 +443,7 @@ export default function AdminSettingsModal({
             <div style={{ background: 'rgba(15, 23, 42, 0.6)', padding: '1.25rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
               <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#fde047' }}>
                 <DollarSign size={15} />
-                Codeair Base Service Package Pricing (Used in AI Smart Responder)
+                Codeair Base Service Package Pricing
               </label>
               
               <input 
@@ -469,7 +474,7 @@ export default function AdminSettingsModal({
           </button>
           <button onClick={handleSaveAll} className="btn-primary">
             <Sparkles size={16} />
-            Save & Connect Credentials
+            Save & Connect Credentials (Permanent)
           </button>
         </div>
 

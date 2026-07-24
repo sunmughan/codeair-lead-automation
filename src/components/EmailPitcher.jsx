@@ -12,7 +12,8 @@ import {
   Building2,
   RefreshCw,
   Server,
-  ShieldCheck
+  ShieldCheck,
+  Paperclip
 } from 'lucide-react';
 import { generateLeadHtml } from '../utils/generateHtml';
 
@@ -31,7 +32,7 @@ export default function EmailPitcher({
   );
   
   const [emailBody, setEmailBody] = useState(
-    lead?.pitchEmail?.body || `Dear ${lead?.businessName || 'Team'},\n\nWe noticed your top ratings on Google!\n\nCodeair has designed a specialized web page for ${lead?.businessName}.\n\nPlease find attached the HTML file of your custom web portal. You can download and open it directly in your browser.\n\nBest regards,\nCodeair`
+    lead?.pitchEmail?.body || `Dear ${lead?.businessName || 'Team'},\n\nGreetings from Codeair Software Solutions!\n\nWe noticed your top ratings on Google Maps and have designed a custom high-performance web portal for ${lead?.businessName}.\n\nWe have attached your complete interactive web portal file (${(lead?.businessName || 'web-portal').toLowerCase().replace(/[^a-z0-9]/g, '-')}-landing-page.html) directly to this email for your review.\n\nBest regards,\nCodeair Software Solutions`
   );
 
   const [isSending, setIsSending] = useState(false);
@@ -51,9 +52,11 @@ export default function EmailPitcher({
     setSendSuccess(null);
     setSendError(null);
 
-    try {
-      const htmlAttachment = generateLeadHtml(lead, lead.branding);
+    // Generate real, full, standalone HTML page code
+    const generatedHtmlCode = generateLeadHtml(lead, lead.branding);
 
+    try {
+      // Call Node.js Express server at http://localhost:3001/api/send-email
       const res = await fetch('http://localhost:3001/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -62,14 +65,14 @@ export default function EmailPitcher({
             host: 'smtp.gmail.com',
             port: '587',
             security: 'TLS',
-            username: 'sales@codeair.com',
-            password: '••••••••••••••••',
-            senderName: 'Codeair'
+            username: '',
+            password: '',
+            senderName: 'Codeair Software Solutions'
           },
           to: lead.email,
           subject: emailSubject,
           body: emailBody,
-          htmlAttachment,
+          htmlAttachment: generatedHtmlCode,
           businessName: lead.businessName
         })
       });
@@ -79,19 +82,19 @@ export default function EmailPitcher({
 
       if (data.success) {
         onSendPitchEmail(lead.id, { subject: emailSubject, body: emailBody });
-        setSendSuccess(`✅ REAL EMAIL DISPATCHED OVER SMTP! Message ID: ${data.messageId || 'sent_live'}. Received by ${lead.email}`);
+        setSendSuccess(`✅ REAL EMAIL SENT! File saved locally on disk at '${data.savedLocalPath}' & attached as '${data.fileName}' to ${lead.email}. Message ID: ${data.messageId}`);
       } else {
-        // Fallback update state & show exact SMTP error
         onSendPitchEmail(lead.id, { subject: emailSubject, body: emailBody });
-        setSendError(`SMTP Dispatch Notice: ${data.error || 'Check SMTP server credentials in Admin Settings.'}`);
+        setSendError(`SMTP Notice: ${data.error || 'Check SMTP server credentials in Admin Settings.'}`);
       }
     } catch (err) {
       setIsSending(false);
-      // Fallback state update
       onSendPitchEmail(lead.id, { subject: emailSubject, body: emailBody });
-      setSendError(`Note: Node.js Email Server at http://localhost:3001 is connecting. (Make sure 'node server.js' is running for live SMTP dispatch).`);
+      setSendError(`Server Connection Notice: Make sure 'node server.js' is running on port 3001.`);
     }
   };
+
+  const htmlFileName = `${(lead.businessName || 'web-portal').toLowerCase().replace(/[^a-z0-9]/g, '-')}-landing-page.html`;
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '360px 1fr', gap: '1.5rem' }}>
@@ -112,7 +115,7 @@ export default function EmailPitcher({
               if (l) {
                 onSelectLead(l);
                 setEmailSubject(l.pitchEmail?.subject || `Customized Web Portal for ${l.businessName}`);
-                setEmailBody(l.pitchEmail?.body || `Dear ${l.businessName} Team,\n\nGreetings from Codeair...`);
+                setEmailBody(l.pitchEmail?.body || `Dear ${l.businessName} Team,\n\nGreetings from Codeair Software Solutions...`);
               }
             }}
             className="form-input"
@@ -130,15 +133,27 @@ export default function EmailPitcher({
           </div>
         </div>
 
-        {/* Live SMTP Server Status */}
+        {/* Real File Attachment Badge */}
         <div className="glass-card" style={{ padding: '1rem', background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.25)' }}>
           <div style={{ fontSize: '0.82rem', fontWeight: '700', color: '#6ee7b7', display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.4rem' }}>
+            <Paperclip size={15} />
+            Real Local File Attachment Active
+          </div>
+          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+            File Name: <code style={{ color: '#fff', fontFamily: 'monospace' }}>{htmlFileName}</code><br />
+            Saving Directory: <span style={{ color: '#c4b5fd' }}>test-mcp/generated_pages/</span>
+          </div>
+        </div>
+
+        {/* Live SMTP Server Status */}
+        <div className="glass-card" style={{ padding: '1rem', background: 'rgba(99, 102, 241, 0.08)', border: '1px solid rgba(99, 102, 241, 0.25)' }}>
+          <div style={{ fontSize: '0.82rem', fontWeight: '700', color: '#a5b4fc', display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.4rem' }}>
             <Server size={15} />
-            Real SMTP Server Connected
+            SMTP Email Server Connected
           </div>
           <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
             Host: <strong style={{ color: '#fff' }}>{smtpConfig?.host || 'smtp.gmail.com'}:{smtpConfig?.port || '587'}</strong><br />
-            Sender Name: <strong style={{ color: '#c4b5fd' }}>{smtpConfig?.senderName || 'Codeair'}</strong>
+            Sender Name: <strong style={{ color: '#c4b5fd' }}>{smtpConfig?.senderName || 'Codeair Software Solutions'}</strong>
           </div>
         </div>
 
@@ -150,7 +165,6 @@ export default function EmailPitcher({
           </h3>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {/* Step 1 */}
             <div style={{
               background: lead.status !== 'extracted' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(15, 23, 42, 0.6)',
               border: lead.status !== 'extracted' ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid var(--border-color)',
@@ -159,14 +173,13 @@ export default function EmailPitcher({
               fontSize: '0.82rem'
             }}>
               <div style={{ fontWeight: '600', color: lead.status !== 'extracted' ? '#6ee7b7' : '#fff' }}>
-                Stage 1: Initial Email Pitch
+                Stage 1: Initial Email Pitch & Attachment
               </div>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                {lead.status === 'extracted' ? 'Pending Send' : 'Dispatched via Real SMTP'}
+                {lead.status === 'extracted' ? 'Pending Send' : 'Dispatched via Real SMTP with Attached HTML File'}
               </div>
             </div>
 
-            {/* Step 2 */}
             <div style={{
               background: 'rgba(15, 23, 42, 0.6)',
               border: '1px solid var(--border-color)',
@@ -188,29 +201,6 @@ export default function EmailPitcher({
                 Trigger Follow-Up #1 Now
               </button>
             </div>
-
-            {/* Step 3 */}
-            <div style={{
-              background: 'rgba(15, 23, 42, 0.6)',
-              border: '1px solid var(--border-color)',
-              padding: '0.75rem',
-              borderRadius: 'var(--radius-md)',
-              fontSize: '0.82rem'
-            }}>
-              <div style={{ fontWeight: '600', color: '#fff' }}>
-                Stage 3: Day 7 Final Opportunity Check
-              </div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.4rem' }}>
-                Final value offer check-in
-              </div>
-              <button 
-                onClick={() => onTriggerFollowUp(lead.id, "Follow-Up #2 (Day 7)")}
-                className="btn-secondary btn-sm"
-                style={{ fontSize: '0.75rem' }}
-              >
-                Trigger Follow-Up #2 Now
-              </button>
-            </div>
           </div>
         </div>
 
@@ -223,10 +213,10 @@ export default function EmailPitcher({
           <div>
             <h2 style={{ fontSize: '1.2rem', fontWeight: '700', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Mail color="#6366f1" size={22} />
-              Real Email Pitch Composer (SMTP Gateway)
+              Real Email Pitch Composer & File Attacher
             </h2>
             <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-              Dispatches actual emails on behalf of <strong>{smtpConfig?.senderName || 'Codeair'}</strong>.
+              Dispatches actual emails with attached <code style={{ color: '#10b981' }}>{htmlFileName}</code> on behalf of <strong>{smtpConfig?.senderName || 'Codeair Software Solutions'}</strong>.
             </p>
           </div>
 
@@ -239,7 +229,7 @@ export default function EmailPitcher({
             fontSize: '0.78rem',
             fontWeight: '600'
           }}>
-            Sender: {smtpConfig?.username || 'sales@codeair.com'}
+            Sender: {smtpConfig?.username || 'configured_smtp'}
           </span>
         </div>
 
@@ -269,11 +259,11 @@ export default function EmailPitcher({
           </div>
 
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <label className="form-label">Email Body (Custom HTML File will be attached automatically):</label>
+            <label className="form-label">Email Body:</label>
             <textarea
               value={emailBody}
               onChange={(e) => setEmailBody(e.target.value)}
-              rows={12}
+              rows={10}
               className="form-input"
               style={{
                 flex: 1,
@@ -285,6 +275,24 @@ export default function EmailPitcher({
             />
           </div>
 
+          {/* Attached File Preview Badge */}
+          <div style={{
+            padding: '0.65rem 0.9rem',
+            background: 'rgba(16, 185, 129, 0.1)',
+            border: '1px solid rgba(16, 185, 129, 0.3)',
+            borderRadius: '8px',
+            fontSize: '0.82rem',
+            color: '#6ee7b7',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}>
+            <Paperclip size={16} />
+            <span>
+              Real Attachment Included: <strong>{htmlFileName}</strong> (Generated & saved locally on disk before dispatch)
+            </span>
+          </div>
+
           {/* Success Banner */}
           {sendSuccess && (
             <div style={{
@@ -293,7 +301,7 @@ export default function EmailPitcher({
               border: '1px solid rgba(16, 185, 129, 0.3)',
               borderRadius: 'var(--radius-md)',
               color: '#6ee7b7',
-              fontSize: '0.88rem',
+              fontSize: '0.85rem',
               display: 'flex',
               alignItems: 'center',
               gap: '0.5rem'
@@ -303,7 +311,7 @@ export default function EmailPitcher({
             </div>
           )}
 
-          {/* Error / Notice Banner */}
+          {/* Error Banner */}
           {sendError && (
             <div style={{
               padding: '0.85rem',
@@ -324,7 +332,7 @@ export default function EmailPitcher({
           {/* Action Bar */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
             <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-              Attachment: <span style={{ color: '#c4b5fd' }}>{(lead.businessName || '').toLowerCase().replace(/[^a-z0-9]/g, '-')}-design.html</span>
+              Header: Logo + Social Links | Footer: Legal + Address + Copyright
             </div>
 
             <button
@@ -335,12 +343,12 @@ export default function EmailPitcher({
               {isSending ? (
                 <>
                   <RefreshCw size={16} className="pulse-glow" />
-                  Dispatching Real Email...
+                  Saving File & Sending via SMTP...
                 </>
               ) : (
                 <>
                   <Send size={16} />
-                  Send Real Email via SMTP
+                  Send Real Email with HTML Attachment
                 </>
               )}
             </button>

@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Local credentials & output
+config.json
+generated_pages/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
