@@ -191,7 +191,7 @@ export default function App() {
     }));
   };
 
-  // FULLY AUTOMATED OUTREACH CAMPAIGN PIPELINE
+  // FULLY AUTOMATED OUTREACH CAMPAIGN PIPELINE (CSV UPLOAD -> AUTO DESIGN -> AUTO SMTP SEND -> MONITORING DASHBOARD)
   const handleStartAutomatedCampaign = async (targetLeads) => {
     const leadsToProcess = targetLeads || leads;
     if (leadsToProcess.length === 0) return;
@@ -210,7 +210,7 @@ export default function App() {
         percentage: Math.round(((i + 0.3) / totalLeads) * 100),
         statusText: `[1/3] Gemini AI Web Searching reputation & details for "${target.businessName}"...`
       });
-      await new Promise(r => setTimeout(r, 500));
+      await new Promise(r => setTimeout(r, 400));
 
       setCampaignProgress({
         current: i + 1,
@@ -218,13 +218,13 @@ export default function App() {
         percentage: Math.round(((i + 0.6) / totalLeads) * 100),
         statusText: `[2/3] Auto-Creating Stitch MCP Project & Saving Local HTML File for "${target.businessName}"...`
       });
-      await new Promise(r => setTimeout(r, 600));
+      await new Promise(r => setTimeout(r, 500));
 
       setCampaignProgress({
         current: i + 1,
         total: totalLeads,
         percentage: Math.round(((i + 1) / totalLeads) * 100),
-        statusText: `[3/3] AUTOMATICALLY Dispatching Pitch Email + Attached HTML File via SMTP (${smtpConfig.host}) to ${target.email}...`
+        statusText: `[3/3] AUTOMATICALLY DISPATCHING REAL EMAIL + ATTACHED HTML FILE VIA SMTP to ${target.email}...`
       });
 
       const pitchBody = `Dear ${target.businessName} Team,\n\nGreetings from Codeair Software Solutions!\n\nWe came across ${target.businessName} on Google Maps (${target.rating || 4.8}★ rating) and were thoroughly impressed!\n\nWe have created a custom high-performance web portal for ${target.businessName} and attached the complete interactive web page file directly to this email.\n\nBest regards,\nCodeair Software Solutions`;
@@ -252,7 +252,7 @@ export default function App() {
         console.warn('Real SMTP Server notification:', err);
       }
 
-      await new Promise(r => setTimeout(r, 500));
+      await new Promise(r => setTimeout(r, 400));
 
       const timestamp = new Date().toLocaleString();
       setLeads(prev => prev.map(l => {
@@ -279,32 +279,7 @@ export default function App() {
 
     setIsCampaignRunning(false);
     setCampaignProgress(null);
-    setActiveTab('emails'); // AUTOMATICALLY DIRECT TO DASHBOARD FOR REVIEW & MONITORING!
-  };
-
-  const handleSendPitchEmail = (leadId, { subject, body }) => {
-    const timestamp = new Date().toLocaleString();
-    setLeads(prev => prev.map(l => {
-      if (l.id === leadId) {
-        const newNotes = [
-          ...(l.activityNotes || []),
-          {
-            id: `note-${Date.now()}`,
-            timestamp: timestamp,
-            type: "pitch_sent",
-            content: `Personalized Pitch Email dispatched via SMTP (${smtpConfig.host}:${smtpConfig.port}) on behalf of ${smtpConfig.senderName || 'Codeair Software Solutions'}.\nSubject: "${subject}"\nAttached Web Page File: ${(l.businessName || 'web-portal').toLowerCase().replace(/[^a-z0-9]/g, '-')}-landing-page.html`,
-            author: `Codeair SMTP Engine (${smtpConfig.username || 'sales'})`
-          }
-        ];
-        return {
-          ...l,
-          pitchEmail: { subject, body },
-          status: l.status === 'replied' ? 'replied' : 'sent',
-          activityNotes: newNotes
-        };
-      }
-      return l;
-    }));
+    setActiveTab('emails'); // DIRECTLY NAVIGATE TO MONITORING DASHBOARD (SHOWING AUTOMATICALLY DELIVERED EMAILS)
   };
 
   const handleTriggerFollowUp = (leadId, stageLabel) => {
@@ -544,7 +519,6 @@ export default function App() {
               selectedLead={selectedLead}
               allLeads={leads}
               onSelectLead={(lead) => setSelectedLeadId(lead.id)}
-              onSendPitchEmail={handleSendPitchEmail}
               onTriggerFollowUp={handleTriggerFollowUp}
               smtpConfig={smtpConfig}
             />
@@ -584,7 +558,7 @@ export default function App() {
         color: 'var(--text-dim)',
         background: 'rgba(9, 13, 22, 0.9)'
       }}>
-        © 2026 <strong>Codeair Software Solutions</strong>. Lead Outreach & Dynamic Web Page Generation Platform. Zero-Touch Automated Pipeline Active.
+        © 2026 <strong>Codeair Software Solutions</strong>. Zero-Touch Email Automation Active. Emails Dispatched Automatically.
       </footer>
     </div>
   );
