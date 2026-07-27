@@ -11,8 +11,10 @@ import {
   FileText, 
   PlusCircle, 
   Tag, 
-  HelpCircle,
-  CornerDownRight
+  CornerDownRight,
+  Palette,
+  Paperclip,
+  RefreshCw
 } from 'lucide-react';
 
 export default function SmartResponder({ 
@@ -25,7 +27,7 @@ export default function SmartResponder({
   const lead = selectedLead || allLeads[0];
 
   const [clientReplyText, setClientReplyText] = useState(
-    "Hi Codeair Team, we saw the custom website HTML file you sent! We really liked the design. Can you share details about your development package and hosting cost?"
+    "Hi Codeair Team, we don't like the current color scheme. Please redesign the webpage with a modern blue theme and update the headline to focus on 24x7 Emergency OPD Care."
   );
 
   const [isAiProcessing, setIsAiProcessing] = useState(false);
@@ -39,15 +41,14 @@ export default function SmartResponder({
     );
   }
 
-  const handleProcessReply = () => {
+  const handleProcessReply = async () => {
     if (!clientReplyText.trim()) return;
     setIsAiProcessing(true);
 
-    setTimeout(() => {
-      setIsAiProcessing(false);
-      onSimulateClientReply(lead.id, clientReplyText);
-      setClientReplyText('');
-    }, 1000);
+    await onSimulateClientReply(lead.id, clientReplyText);
+
+    setIsAiProcessing(false);
+    setClientReplyText('');
   };
 
   const handleAddNote = () => {
@@ -56,17 +57,20 @@ export default function SmartResponder({
     setManualNoteInput('');
   };
 
+  const cleanSlug = (lead.businessName || 'web-portal').toLowerCase().replace(/[^a-z0-9]/g, '-');
+  const savedFileName = `${cleanSlug}-landing-page.html`;
+
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '400px 1fr', gap: '1.5rem' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: '420px 1fr', gap: '1.5rem' }}>
       
-      {/* Left Column: Client Reply Simulator & Quick Prompts */}
+      {/* Left Column: Client Reply Simulator & Quick Presets */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
         
         {/* Lead Selector */}
         <div className="glass-card" style={{ padding: '1.25rem' }}>
           <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#c4b5fd' }}>
             <Building2 size={15} />
-            Select Business Lead:
+            Target Business Lead:
           </label>
           <select 
             value={lead.id}
@@ -84,27 +88,28 @@ export default function SmartResponder({
             ))}
           </select>
           <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.4rem' }}>
-            Email: <strong style={{ color: '#38bdf8' }}>{lead.email}</strong>
+            Email: <strong style={{ color: '#38bdf8' }}>{lead.email}</strong><br />
+            Saved File: <code style={{ color: '#6ee7b7' }}>generated_pages/{savedFileName}</code>
           </div>
         </div>
 
         {/* Client Reply Simulator Card */}
         <div className="glass-card" style={{ padding: '1.25rem' }}>
-          <h3 style={{ fontSize: '0.95rem', fontWeight: '700', color: '#fff', marginBottom: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+          <h3 style={{ fontSize: '0.95rem', fontWeight: '700', color: '#fff', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <User size={16} color="#38bdf8" />
-            Simulate Client Lead Reply
+            AI Auto-Responder & Re-Design Trigger
           </h3>
           <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.8rem' }}>
-            Simulate incoming emails from client leads to test how AI responds on behalf of Codeair.
+            If a lead requests design changes, AI will automatically <strong>re-design the page</strong>, save the updated <code style={{ color: '#fff' }}>.html</code> file locally, and send an email reply with the new attachment via SMTP!
           </p>
 
           {/* Quick Preset Replies */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '1rem' }}>
-            <span style={{ fontSize: '0.72rem', color: 'var(--text-dim)', fontWeight: '600' }}>QUICK TEST REPLIES:</span>
+            <span style={{ fontSize: '0.72rem', color: '#a5b4fc', fontWeight: '700' }}>TEST AUTO-RESPONDER RE-DESIGN PRESETS:</span>
             {[
-              "We loved the web page demo! What is the pricing and project duration?",
-              "Can you add a student online admission form and parent login portal?",
-              "Can we schedule a Zoom call tomorrow to discuss deployment?"
+              "We don't like the current layout. Please change colors to blue & update headline for Emergency Care.",
+              "Please redesign the landing page with a modern dark theme and update services list.",
+              "We liked the demo! What is your final price and deployment timeline?"
             ].map((preset, idx) => (
               <button
                 key={idx}
@@ -113,7 +118,7 @@ export default function SmartResponder({
                   background: 'rgba(15, 23, 42, 0.7)',
                   border: '1px solid var(--border-color)',
                   color: '#94a3b8',
-                  padding: '0.4rem 0.6rem',
+                  padding: '0.45rem 0.65rem',
                   borderRadius: '6px',
                   fontSize: '0.75rem',
                   textAlign: 'left',
@@ -145,13 +150,13 @@ export default function SmartResponder({
           >
             {isAiProcessing ? (
               <>
-                <Sparkles size={16} className="pulse-glow" />
-                Formulating AI Smart Reply...
+                <RefreshCw size={16} className="pulse-glow" />
+                Auto-Redesigning & Dispatching Email...
               </>
             ) : (
               <>
                 <Bot size={16} />
-                Receive Reply & Trigger AI Response
+                Receive Reply & Trigger Auto-Redesign Pipeline
               </>
             )}
           </button>
@@ -161,15 +166,11 @@ export default function SmartResponder({
         <div className="glass-card" style={{ padding: '1.25rem' }}>
           <h3 style={{ fontSize: '0.9rem', fontWeight: '700', color: '#fff', marginBottom: '0.6rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <Tag size={15} color="#ec4899" />
-            Add Manual Inspection & Training Note
+            Add Manual Audit Note
           </h3>
-          <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.6rem' }}>
-            Add feedback notes to refine AI response tone and keep record for Codeair team.
-          </p>
-
           <input 
             type="text"
-            placeholder="e.g. Approved AI reply tone; offer 10% discount on call"
+            placeholder="e.g. Client requested medical blue theme; verified updated attachment"
             value={manualNoteInput}
             onChange={(e) => setManualNoteInput(e.target.value)}
             className="form-input"
@@ -183,7 +184,7 @@ export default function SmartResponder({
             style={{ width: '100%', justifyContent: 'center' }}
           >
             <PlusCircle size={14} />
-            Save Inspection Note
+            Save Audit Note
           </button>
         </div>
 
@@ -205,15 +206,15 @@ export default function SmartResponder({
           <div>
             <h2 style={{ fontSize: '1.2rem', fontWeight: '700', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <MessageSquareCode color="#10b981" size={22} />
-              Individual Activity Notes & Interaction Log
+              Auto-Responder & Interaction Audit Trail
             </h2>
             <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-              Detailed audit trail for <strong>{lead.businessName}</strong> ({lead.email})
+              Real-time activity log for <strong>{lead.businessName}</strong> ({lead.email})
             </p>
           </div>
 
           <span className="badge badge-replied">
-            Total Log Entries: {lead.activityNotes?.length || 0}
+            Total Entries: {lead.activityNotes?.length || 0}
           </span>
         </div>
 
@@ -227,7 +228,7 @@ export default function SmartResponder({
             lead.activityNotes.map((note) => {
               const isClient = note.type === 'client_reply';
               const isAi = note.type === 'ai_smart_reply';
-              const isPitch = note.type === 'pitch_sent';
+              const isRedesign = note.content.includes('Re-Design') || note.content.includes('redesigned');
 
               return (
                 <div 
@@ -235,14 +236,18 @@ export default function SmartResponder({
                   style={{
                     background: isClient 
                       ? 'rgba(56, 189, 248, 0.08)' 
-                      : isAi 
-                        ? 'rgba(16, 185, 129, 0.08)' 
-                        : 'rgba(15, 23, 42, 0.6)',
+                      : isRedesign 
+                        ? 'rgba(236, 72, 153, 0.12)' 
+                        : isAi 
+                          ? 'rgba(16, 185, 129, 0.08)' 
+                          : 'rgba(15, 23, 42, 0.6)',
                     border: isClient 
                       ? '1px solid rgba(56, 189, 248, 0.25)' 
-                      : isAi 
-                        ? '1px solid rgba(16, 185, 129, 0.25)' 
-                        : '1px solid var(--border-color)',
+                      : isRedesign 
+                        ? '1px solid rgba(236, 72, 153, 0.35)' 
+                        : isAi 
+                          ? '1px solid rgba(16, 185, 129, 0.25)' 
+                          : '1px solid var(--border-color)',
                     borderRadius: 'var(--radius-md)',
                     padding: '1rem',
                     display: 'flex',
@@ -252,9 +257,10 @@ export default function SmartResponder({
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.78rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: '700', color: isClient ? '#38bdf8' : isAi ? '#6ee7b7' : '#c4b5fd' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: '700', color: isClient ? '#38bdf8' : isRedesign ? '#f472b6' : isAi ? '#6ee7b7' : '#c4b5fd' }}>
                       {isClient && <User size={14} />}
-                      {isAi && <Bot size={14} />}
+                      {isRedesign && <Palette size={14} />}
+                      {!isClient && !isRedesign && isAi && <Bot size={14} />}
                       {!isClient && !isAi && <Clock size={14} />}
                       {note.author || 'System'}
                     </div>
@@ -268,10 +274,10 @@ export default function SmartResponder({
                     {note.content}
                   </div>
 
-                  {isAi && (
-                    <div style={{ fontSize: '0.72rem', color: '#a7f3d0', display: 'flex', alignItems: 'center', gap: '0.3rem', marginTop: '0.2rem' }}>
-                      <CornerDownRight size={12} />
-                      Smart Response automatically recorded for Codeair team review & model training.
+                  {isRedesign && (
+                    <div style={{ fontSize: '0.75rem', color: '#f472b6', display: 'flex', alignItems: 'center', gap: '0.3rem', marginTop: '0.2rem' }}>
+                      <Paperclip size={13} />
+                      Updated HTML file written to disk & attached to outgoing SMTP reply email.
                     </div>
                   )}
                 </div>

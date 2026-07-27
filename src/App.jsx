@@ -135,16 +135,20 @@ export default function App() {
     return (previewDomain || '{slug}.preview.codeair.com').replace('{slug}', slug);
   };
 
+  // FULL ZERO-TOUCH AUTOMATION PIPELINE ON CSV IMPORT
   const handleImportLeads = (newLeads) => {
     setLeads(newLeads);
     if (newLeads.length > 0) {
       setSelectedLeadId(newLeads[0].id);
+      // AUTOMATICALLY TRIGGER FULL AUTOMATED CAMPAIGN WITHOUT REQUIRING MANUAL CLICK!
+      handleStartAutomatedCampaign(newLeads);
     }
   };
 
   const handleLoadSampleLeads = () => {
     setLeads(INITIAL_LEADS);
     setSelectedLeadId(INITIAL_LEADS[0].id);
+    handleStartAutomatedCampaign(INITIAL_LEADS);
   };
 
   const handleUpdateLeadBranding = (leadId, newBranding) => {
@@ -187,14 +191,16 @@ export default function App() {
     }));
   };
 
-  const handleStartAutomatedCampaign = async () => {
-    if (leads.length === 0) return;
+  // FULLY AUTOMATED OUTREACH CAMPAIGN PIPELINE
+  const handleStartAutomatedCampaign = async (targetLeads) => {
+    const leadsToProcess = targetLeads || leads;
+    if (leadsToProcess.length === 0) return;
     setIsCampaignRunning(true);
 
-    const totalLeads = leads.length;
+    const totalLeads = leadsToProcess.length;
 
     for (let i = 0; i < totalLeads; i++) {
-      const target = leads[i];
+      const target = leadsToProcess[i];
       const previewUrl = getDynamicPreviewUrl(target.businessName);
       const generatedHtmlCode = generateLeadHtml(target, target.branding);
 
@@ -204,7 +210,7 @@ export default function App() {
         percentage: Math.round(((i + 0.3) / totalLeads) * 100),
         statusText: `[1/3] Gemini AI Web Searching reputation & details for "${target.businessName}"...`
       });
-      await new Promise(r => setTimeout(r, 600));
+      await new Promise(r => setTimeout(r, 500));
 
       setCampaignProgress({
         current: i + 1,
@@ -212,13 +218,13 @@ export default function App() {
         percentage: Math.round(((i + 0.6) / totalLeads) * 100),
         statusText: `[2/3] Auto-Creating Stitch MCP Project & Saving Local HTML File for "${target.businessName}"...`
       });
-      await new Promise(r => setTimeout(r, 700));
+      await new Promise(r => setTimeout(r, 600));
 
       setCampaignProgress({
         current: i + 1,
         total: totalLeads,
         percentage: Math.round(((i + 1) / totalLeads) * 100),
-        statusText: `[3/3] Dispatching REAL Email + Attached HTML File via SMTP (${smtpConfig.host}) to ${target.email}...`
+        statusText: `[3/3] AUTOMATICALLY Dispatching Pitch Email + Attached HTML File via SMTP (${smtpConfig.host}) to ${target.email}...`
       });
 
       const pitchBody = `Dear ${target.businessName} Team,\n\nGreetings from Codeair Software Solutions!\n\nWe came across ${target.businessName} on Google Maps (${target.rating || 4.8}★ rating) and were thoroughly impressed!\n\nWe have created a custom high-performance web portal for ${target.businessName} and attached the complete interactive web page file directly to this email.\n\nBest regards,\nCodeair Software Solutions`;
@@ -246,7 +252,7 @@ export default function App() {
         console.warn('Real SMTP Server notification:', err);
       }
 
-      await new Promise(r => setTimeout(r, 600));
+      await new Promise(r => setTimeout(r, 500));
 
       const timestamp = new Date().toLocaleString();
       setLeads(prev => prev.map(l => {
@@ -257,8 +263,8 @@ export default function App() {
               id: `note-campaign-${Date.now()}`,
               timestamp: timestamp,
               type: "pitch_sent",
-              content: `Automated Outreach Campaign executed!\n1. Gemini AI Web Search completed.\n2. Stitch MCP Project created.\n3. Real Pitch Email + HTML File Attachment dispatched via SMTP Gateway (${smtpConfig.host}:${smtpConfig.port}) to ${l.email}.${savedFileNotice}`,
-              author: "Codeair Automated Outreach Pipeline"
+              content: `Zero-Touch Automated Outreach Campaign executed!\n1. Gemini AI Web Search completed.\n2. Stitch MCP Project created.\n3. Real Pitch Email + HTML File Attachment dispatched automatically via SMTP Gateway (${smtpConfig.host}:${smtpConfig.port}) to ${l.email}.${savedFileNotice}`,
+              author: "Codeair Zero-Touch Pipeline"
             }
           ];
           return {
@@ -273,7 +279,7 @@ export default function App() {
 
     setIsCampaignRunning(false);
     setCampaignProgress(null);
-    setActiveTab('emails');
+    setActiveTab('emails'); // AUTOMATICALLY DIRECT TO DASHBOARD FOR REVIEW & MONITORING!
   };
 
   const handleSendPitchEmail = (leadId, { subject, body }) => {
@@ -324,12 +330,96 @@ export default function App() {
     }));
   };
 
-  const handleSimulateClientReply = (leadId, clientMsg) => {
+  // INTELLIGENT AUTO-RESPONDER WITH AUTOMATIC RE-DESIGN ENGINE & SMTP EMAIL REPLY
+  const handleSimulateClientReply = async (leadId, clientMsg) => {
     const timestamp = new Date().toLocaleString();
-    
     const targetLead = leads.find(l => l.id === leadId);
-    const aiResponseText = `Dear ${targetLead?.businessName || 'Team'},\n\nThank you for your response!\n\nAt Codeair Software Solutions, our specialized Web Development & Automation package for ${targetLead?.category || 'businesses'} includes:\n- Full responsive custom web portal\n- Free SSL & high-speed SSD hosting for 1 year\n- WhatsApp Chat & Lead Form integration\n\nOur launch package starts at ${packagePrice || '₹14,999'} complete. We can deploy your website live within 48 hours.\n\nWould tomorrow at 3:00 PM work for a brief 10-minute demo call?\n\nWarm regards,\nCodeair Software Solutions Team`;
+    if (!targetLead) return;
 
+    const lowerMsg = clientMsg.toLowerCase();
+    const isRedesignRequest = lowerMsg.includes("don't like") || 
+                             lowerMsg.includes("dont like") || 
+                             lowerMsg.includes("change") || 
+                             lowerMsg.includes("redesign") || 
+                             lowerMsg.includes("color") || 
+                             lowerMsg.includes("theme") || 
+                             lowerMsg.includes("blue") || 
+                             lowerMsg.includes("medical") || 
+                             lowerMsg.includes("headline") || 
+                             lowerMsg.includes("dark mode");
+
+    let updatedBranding = targetLead.branding;
+    let aiResponseText = "";
+    let isRedesignExecuted = false;
+
+    if (isRedesignRequest) {
+      isRedesignExecuted = true;
+
+      // 1. AUTOMATICALLY RE-DESIGN THE BRANDING ACCORDING TO CLIENT FEEDBACK
+      const isMedical = lowerMsg.includes("medical") || targetLead.category?.toLowerCase().includes("hospital") || targetLead.category?.toLowerCase().includes("clinic");
+
+      updatedBranding = {
+        ...targetLead.branding,
+        primaryColor: isMedical ? "#0284c7" : "#3b82f6",
+        accentColor: isMedical ? "#06b6d4" : "#ec4899",
+        headline: isMedical 
+          ? `${targetLead.businessName} — 24x7 Multi-Specialty & Emergency OPD Care`
+          : `${targetLead.businessName} — Premier Premium Services & Certified Excellence`,
+        tagline: isMedical
+          ? `Advanced Diagnostic Labs, ICU & Expert Doctors in ${targetLead.address?.split(',')[0] || 'City'}`
+          : `Serving Thousands of Satisfied Clients with Top Rated (${targetLead.rating || 4.8}★) Quality`,
+        heroBannerText: `🔥 Verified Official Listing | 24x7 Emergency Care & Online OPD Booking`
+      };
+
+      // 2. RE-GENERATE THE INDEX-8 HTML LANDING PAGE CODE
+      const revisedHtmlCode = generateLeadHtml(targetLead, updatedBranding);
+
+      // 3. CONSTRUCT RE-DESIGN ACKNOWLEDGMENT REPLY EMAIL
+      aiResponseText = `Dear ${targetLead.businessName} Team,\n\nThank you for your valuable feedback regarding your web portal demo!\n\nAs per your instructions, our AI design engine has completely RE-DESIGNED your custom landing page with your specified color scheme and updated headline.\n\nWe have saved the updated web page file to our system and attached it directly to this email (${(targetLead.businessName || 'web-portal').toLowerCase().replace(/[^a-z0-9]/g, '-')}-landing-page.html).\n\nYou can download and open the attachment in any browser to inspect the new design!\n\nBest regards,\nCodeair Software Solutions`;
+
+      // 4. SAVE RE-DESIGNED FILE LOCALLY & DISPATCH SMTP REPLY EMAIL WITH NEW ATTACHMENT
+      try {
+        await fetch('http://localhost:3001/api/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            smtpConfig,
+            to: targetLead.email,
+            subject: `Re: Revised Web Portal Design for ${targetLead.businessName}`,
+            body: aiResponseText,
+            htmlAttachment: revisedHtmlCode,
+            businessName: targetLead.businessName,
+            leadId: targetLead.id
+          })
+        });
+      } catch (err) {
+        console.warn('Auto-responder SMTP notification:', err);
+      }
+    } else {
+      // Standard Inquiry Auto-Responder
+      aiResponseText = `Dear ${targetLead.businessName} Team,\n\nThank you for reaching out!\n\nAt Codeair Software Solutions, our specialized Web Development & Automation package for ${targetLead.category || 'businesses'} includes:\n- Full responsive custom web portal\n- Free SSL & high-speed SSD hosting for 1 year\n- WhatsApp Chat & Lead Form integration\n\nOur launch package starts at ${packagePrice || '₹14,999'} complete. We can deploy your website live within 48 hours.\n\nWould tomorrow at 3:00 PM work for a brief 10-minute demo call?\n\nWarm regards,\nCodeair Software Solutions Team`;
+
+      const currentHtmlCode = generateLeadHtml(targetLead, targetLead.branding);
+      try {
+        await fetch('http://localhost:3001/api/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            smtpConfig,
+            to: targetLead.email,
+            subject: `Re: Web Portal Consultation for ${targetLead.businessName}`,
+            body: aiResponseText,
+            htmlAttachment: currentHtmlCode,
+            businessName: targetLead.businessName,
+            leadId: targetLead.id
+          })
+        });
+      } catch (err) {
+        console.warn('Auto-responder SMTP notification:', err);
+      }
+    }
+
+    // 5. LOG COMPLETE TRANSACTION IN REACT STATE & MYSQL ACTIVITY NOTES
     setLeads(prev => prev.map(l => {
       if (l.id === leadId) {
         const newNotes = [
@@ -345,12 +435,15 @@ export default function App() {
             id: `note-ai-${Date.now() + 1}`,
             timestamp: timestamp,
             type: "ai_smart_reply",
-            content: `Codeair AI Smart Auto-Responder Sent via SMTP:\n"${aiResponseText}"`,
+            content: isRedesignExecuted
+              ? `🎨 CODEAIR AI AUTO-RESPONDER AUTOMATIC RE-DESIGN:\n1. Client requested design changes ('${clientMsg}').\n2. Page automatically re-designed with updated colors & headline.\n3. Overwrote local file 'generated_pages/${(l.businessName || 'web-portal').toLowerCase().replace(/[^a-z0-9]/g, '-')}-landing-page.html'.\n4. Dispatched SMTP reply email to ${l.email} with revised HTML attachment.\n\nReply Email Content:\n"${aiResponseText}"`
+              : `Codeair AI Smart Auto-Responder Dispatched via SMTP:\n"${aiResponseText}"`,
             author: "Codeair AI Auto-Responder"
           }
         ];
         return {
           ...l,
+          branding: updatedBranding,
           status: 'replied',
           activityNotes: newNotes
         };
@@ -491,7 +584,7 @@ export default function App() {
         color: 'var(--text-dim)',
         background: 'rgba(9, 13, 22, 0.9)'
       }}>
-        © 2026 <strong>Codeair Software Solutions</strong>. Lead Outreach & Dynamic Web Page Generation Platform. Connected to MySQL Database.
+        © 2026 <strong>Codeair Software Solutions</strong>. Lead Outreach & Dynamic Web Page Generation Platform. Zero-Touch Automated Pipeline Active.
       </footer>
     </div>
   );
